@@ -152,6 +152,10 @@ usando DuckDB directamente sobre el archivo JSON — sin base de datos.
 
 ```bash
 pytest tests/ -v
+
+#o
+
+python -m pytest tests/ -v
 ```
 
 Deben pasar 50 tests sin servicios externos corriendo (todo mockeado).
