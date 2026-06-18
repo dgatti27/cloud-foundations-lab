@@ -33,7 +33,7 @@ fi
 
 # Instalar dependencias Python
 if [ -f requirements.txt ]; then
-  python3 -m pip install -r requirements.txt --quiet
+  python3 -m pip install --break-system-packages -r requirements.txt --quiet
   echo "Dependencias Python instaladas."
 fi
 
