@@ -55,7 +55,9 @@ def create_group_with_policies(iam):
         iam.create_group(GroupName=group)
         print(f"  grupo '{group}' creado")
     except ClientError as e:
+
         if _already_exists(e):
+
             print(f"  grupo '{group}' ya existe")
         else:
             raise
@@ -123,7 +125,9 @@ def create_role(iam):
         )
         print(f"  rol '{role_name}' creado")
     except ClientError as e:
+
         if _already_exists(e):
+
             print(f"  rol '{role_name}' ya existe")
         else:
             raise

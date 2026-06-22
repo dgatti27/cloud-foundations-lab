@@ -56,14 +56,10 @@ Este bucket es el "recurso protegido" sobre el que vamos a definir permisos.
 awslocal iam create-group --group-name bigdata-read
 
 # política administrada (equivalente a AmazonS3ReadOnlyAccess, acotada al bucket)
-awslocal iam create-policy \
-  --policy-name S3ReadOnlyLab \
-  --policy-document file://iam/s3_read_policy.json
+awslocal iam create-policy --policy-name S3ReadOnlyLab policy-document file://iam/s3_read_policy.json
 
 # adjuntar al grupo
-awslocal iam attach-group-policy \
-  --group-name bigdata-read \
-  --policy-arn arn:aws:iam::000000000000:policy/S3ReadOnlyLab
+awslocal iam attach-group-policy --group-name bigdata-read --policy-arn arn:aws:iam::000000000000:policy/S3ReadOnlyLab
 ```
 
 Revisá `iam/s3_read_policy.json`: tiene `Effect: Allow`, `Action: s3:GetObject`
@@ -105,14 +101,9 @@ dan acceso indefinido.
 ## Paso 6 — Crear rol con trust policy para EC2
 
 ```bash
-awslocal iam create-role \
-  --role-name app-role \
-  --assume-role-policy-document file://iam/trust_policy.json
+awslocal iam create-role --role-name app-role --assume-role-policy-document file://iam/trust_policy.json
 
-awslocal iam put-role-policy \
-  --role-name app-role \
-  --policy-name InlineS3Read \
-  --policy-document file://iam/s3_read_policy.json
+awslocal iam put-role-policy --role-name app-role --policy-name InlineS3Read --policy-document file://iam/s3_read_policy.json
 
 awslocal iam get-role --role-name app-role
 ```
@@ -126,10 +117,7 @@ puede asumir este rol — no cualquier usuario.
 ## Paso 7 — AssumeRole vía STS → credenciales temporales
 
 ```bash
-awslocal sts assume-role \
-  --role-arn arn:aws:iam::000000000000:role/app-role \
-  --role-session-name lab04-session \
-  --duration-seconds 900
+awslocal sts assume-role --role-arn arn:aws:iam::000000000000:role/app-role --role-session-name lab04-session --duration-seconds 900
 ```
 
 El response tiene tres campos clave:
@@ -141,9 +129,9 @@ El response tiene tres campos clave:
 Usá esas credenciales para acceder a S3:
 
 ```bash
-export AWS_ACCESS_KEY_ID=<AccessKeyId del assume-role>
-export AWS_SECRET_ACCESS_KEY=<SecretAccessKey>
-export AWS_SESSION_TOKEN=<SessionToken>
+export AWS_ACCESS_KEY_ID=LSIAQAAAAAAABBEH2STK
+export AWS_SECRET_ACCESS_KEY=2tOTAAxFjxeyz4NbSZpGxWSCadWHUZtPaz0YpEA+
+export AWS_SESSION_TOKEN=FQoGZXIvYXdzEBYaDSU6BmTC7mQq3HNK8Go3unKojqnVNUKZAxNuEw457v8rRBU/nuEik5FilWph6SYr4mf+1QYCwse3j6xMkkLxum8wBKIV1WPyCvBjK92HV1R/6rJYu/9t6zAdn+37WaK7jNr/dFe49rNsPY3+yuxBrcFqp09sAzaAfMQXi9n/DIdQ5GjQHmbDjMHjtefodNaHd5vw+kDBaN9o4zjsSm3/PkERX58GM7wTgNzcP8sgC6AtHOvLtUfvRSl92zGIBXe5QQ42UgoHOZaS4OOasr3KLCJcx7YhCF2/CWkYUVIhLx5w2+b/kIr3geBXRFodh4ju+2yR9lXuL0Ruz0quiiE=
 
 awslocal s3 ls s3://course-data-raw --recursive
 ```
@@ -168,10 +156,7 @@ En Community, un `Deny` explícito no bloquea la llamada:
 
 ```bash
 # esto en AWS real bloquearía al usuario — en LocalStack Community pasa igual
-awslocal iam put-user-policy \
-  --user-name lab-user \
-  --policy-name DenyEverything \
-  --policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Deny","Action":"*","Resource":"*"}]}'
+awslocal iam put-user-policy --user-name lab-user --policy-name DenyEverything --policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Deny","Action":"*","Resource":"*"}]}'
 
 awslocal s3 ls s3://course-data-raw   # en Community: sigue funcionando
 ```
