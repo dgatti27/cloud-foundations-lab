@@ -9,8 +9,8 @@ Stack del curso: local-first con equivalentes cloud documentados por componente.
 | PostgreSQL (Docker)      | RDS · Cloud SQL · Azure Database for PG            | usuario de BD desde variable de entorno, nunca hardcodeado |
 | MinIO                    | Amazon S3 · Cloud Storage · Azure Blob Storage     | rol IAM con `s3:GetObject/PutObject` acotado al bucket |
 | Redis (Docker)           | ElastiCache · Memorystore · Azure Cache for Redis  | contraseña desde variable de entorno             |
-| Redpanda / Kafka         | MSK/Kinesis · Pub/Sub · Azure Event Hubs           | SASL/SCRAM o credencial de servicio, no acceso anónimo |
-| LocalStack               | AWS IAM/STS/S3 real                                 | `test/test` en local; roles con STS en producción |
+| Redpanda / Kafka         | MSK/Kinesis · Pub/Sub · Azure Event Hubs           | SASL/SCRAM (mecanismo de autenticación basado en contraseña con desafio) o credencial de servicio, no acceso anónimo |
+| LocalStack               | AWS IAM/STS/S3 real                                 | `test/test` en local; roles con STS (Security Token Service) en producción |
 | Docker Compose           | ECS/Fargate · Cloud Run · Azure Container Apps     | rol de tarea (task role) asumible por el contenedor |
 
 ## Decisiones de identidad (clase 4)

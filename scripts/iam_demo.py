@@ -48,7 +48,9 @@ def create_group_with_policies(iam):
         iam.create_group(GroupName=group)
         print(f"  grupo '{group}' creado")
     except ClientError as e:
-        if e.response["Error"]["Code"] == "EntityAlreadyExists":
+        code = e.response.get("Error", {}).get("Code", "")
+        msg = str(e)
+        if code == "EntityAlreadyExists" or "already exists" in msg:
             print(f"  grupo '{group}' ya existe")
         else:
             raise
@@ -116,7 +118,9 @@ def create_role(iam):
         )
         print(f"  rol '{role_name}' creado")
     except ClientError as e:
-        if e.response["Error"]["Code"] == "EntityAlreadyExists":
+        code = e.response.get("Error", {}).get("Code", "")
+        msg = str(e)
+        if code == "EntityAlreadyExists" or "already exists" in msg:
             print(f"  rol '{role_name}' ya existe")
         else:
             raise
