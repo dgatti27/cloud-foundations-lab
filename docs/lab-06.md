@@ -36,17 +36,10 @@ awslocal s3 ls   # debería responder vacío o con los buckets de labs anteriore
 awslocal s3 mb s3://course-data-lake
 
 # Block Public Access — 4 flags ON
-awslocal s3api put-public-access-block \
-  --bucket course-data-lake \
-  --public-access-block-configuration \
-    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+awslocal s3api put-public-access-block --bucket course-data-lake --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
 # Encryption por defecto (SSE-S3)
-awslocal s3api put-bucket-encryption \
-  --bucket course-data-lake \
-  --server-side-encryption-configuration '{
-    "Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]
-  }'
+awslocal s3api put-bucket-encryption --bucket course-data-lake --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
 
 # Verificar
 awslocal s3api get-public-access-block --bucket course-data-lake
@@ -60,9 +53,7 @@ awslocal s3api get-bucket-encryption --bucket course-data-lake
 ## Paso 2 — Versioning desde el inicio
 
 ```bash
-awslocal s3api put-bucket-versioning \
-  --bucket course-data-lake \
-  --versioning-configuration Status=Enabled
+awslocal s3api put-bucket-versioning --bucket course-data-lake --versioning-configuration Status=Enabled
 
 awslocal s3api get-bucket-versioning --bucket course-data-lake
 ```
@@ -106,10 +97,7 @@ echo "NEW_ORDER_2026_FICTICIO,99999,delivered,2026-06-18,2026-06-19,2026-06-25,,
 awslocal s3 cp /tmp/orders.csv s3://course-data-lake/raw/olist/orders.csv
 
 # Listar versiones
-awslocal s3api list-object-versions \
-  --bucket course-data-lake \
-  --prefix raw/olist/orders.csv \
-  --query "Versions[].{Id:VersionId,Size:Size,Latest:IsLatest}"
+awslocal s3api list-object-versions --bucket course-data-lake --prefix raw/olist/orders.csv --query "Versions[].{Id:VersionId,Size:Size,Latest:IsLatest}"
 ```
 
 La versión anterior NO se borró — sigue accesible por su `VersionId` y sigue cobrando storage.
@@ -120,9 +108,7 @@ La versión anterior NO se borró — sigue accesible por su `VersionId` y sigue
 
 ```bash
 # El JSON molde está en s3/bucket_policy.json (Principal=app-role, scope=raw/* y processed/*)
-awslocal s3api put-bucket-policy \
-  --bucket course-data-lake \
-  --policy file://s3/bucket_policy.json
+awslocal s3api put-bucket-policy --bucket course-data-lake --policy file://s3/bucket_policy.json
 
 # Verificar
 awslocal s3api get-bucket-policy --bucket course-data-lake --query Policy --output text | python3 -m json.tool
