@@ -32,11 +32,11 @@ awslocal s3 ls s3://course-data-lake | head -3
 ## Paso 1 — Crear la VPC
 
 ```bash
-VPC_ID=$(awslocal ec2 create-vpc --cidr-block 10.0.0.0/16 \
-  --query "Vpc.VpcId" --output text)
+VPC_ID=$(awslocal ec2 create-vpc --cidr-block 10.0.0.0/16 --query "Vpc.VpcId" --output text)
+#$VPC_ID = awslocal ec2 create-vpc --cidr-block 10.0.0.0/16 --query "Vpc.VpcId" --output text Write-Host "VPC_ID=$VPC_ID"
 
-awslocal ec2 create-tags --resources $VPC_ID \
-  --tags Key=Name,Value=course-vpc Key=Lab,Value=07
+awslocal ec2 create-tags --resources $VPC_ID --tags Key=Name,Value=course-vpc Key=Lab,Value=07
+#$VPC_ID = awslocal ec2 create-vpc --cidr-block 10.0.0.0/16 --query "Vpc.VpcId" --output text awslocal ec2 create-tags --resources $VPC_ID --tags 'Key=Name,Value=course-vpc' 'Key=Lab,Value=07'
 
 awslocal ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames
 awslocal ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-support
@@ -51,17 +51,9 @@ echo "VPC: $VPC_ID"
 ## Paso 2 — Subredes en distintas AZs (HA por diseño)
 
 ```bash
-PUB_SUBNET=$(awslocal ec2 create-subnet \
-  --vpc-id $VPC_ID \
-  --cidr-block 10.0.1.0/24 \
-  --availability-zone us-east-1a \
-  --query "Subnet.SubnetId" --output text)
+PUB_SUBNET=$(awslocal ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.1.0/24 --availability-zone us-east-1a --query "Subnet.SubnetId" --output text)
 
-PRIV_SUBNET=$(awslocal ec2 create-subnet \
-  --vpc-id $VPC_ID \
-  --cidr-block 10.0.2.0/24 \
-  --availability-zone us-east-1b \
-  --query "Subnet.SubnetId" --output text)
+PRIV_SUBNET=$(awslocal ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.2.0/24 --availability-zone us-east-1b --query "Subnet.SubnetId" --output text)
 
 awslocal ec2 create-tags --resources $PUB_SUBNET --tags Key=Name,Value=public-1a Key=Tier,Value=public
 awslocal ec2 create-tags --resources $PRIV_SUBNET --tags Key=Name,Value=private-1b Key=Tier,Value=private
@@ -79,8 +71,7 @@ echo "Privada:  $PRIV_SUBNET (us-east-1b)"
 ## Paso 3 — Internet Gateway (la puerta a Internet)
 
 ```bash
-IGW_ID=$(awslocal ec2 create-internet-gateway \
-  --query "InternetGateway.InternetGatewayId" --output text)
+IGW_ID=$(awslocal ec2 create-internet-gateway --query "InternetGateway.InternetGatewayId" --output text)
 
 awslocal ec2 attach-internet-gateway --internet-gateway-id $IGW_ID --vpc-id $VPC_ID
 
@@ -100,16 +91,12 @@ RT_PUB=$(awslocal ec2 create-route-table --vpc-id $VPC_ID \
 awslocal ec2 create-tags --resources $RT_PUB --tags Key=Name,Value=rt-public
 
 # La ruta crítica: cualquier IP no-local sale por el IGW
-awslocal ec2 create-route \
-  --route-table-id $RT_PUB \
-  --destination-cidr-block 0.0.0.0/0 \
-  --gateway-id $IGW_ID
+awslocal ec2 create-route --route-table-id $RT_PUB --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW_ID
 
 # Asociar la route table a la subnet pública
 awslocal ec2 associate-route-table --route-table-id $RT_PUB --subnet-id $PUB_SUBNET
 
-awslocal ec2 describe-route-tables --route-table-ids $RT_PUB \
-  --query "RouteTables[0].Routes"
+awslocal ec2 describe-route-tables --route-table-ids $RT_PUB --query "RouteTables[0].Routes"
 ```
 
 **No existe un flag "make subnet public".** Una subred es pública **si y solo si** su route table tiene una ruta a un IGW. Esto es la pieza más misunderstood de VPC.
@@ -136,29 +123,16 @@ Lo que define el aislamiento es la **ausencia** de ruta a IGW.
 
 ```bash
 # SG pública: HTTP desde Internet
-SG_PUB=$(awslocal ec2 create-security-group \
-  --vpc-id $VPC_ID \
-  --group-name web-public-sg \
-  --description "Capa pública — HTTP 80 desde Internet" \
-  --query "GroupId" --output text)
+SG_PUB=$(awslocal ec2 create-security-group --vpc-id $VPC_ID --group-name web-public-sg --description "Capa pública — HTTP 80 desde Internet" --query "GroupId" --output text)
 
-awslocal ec2 authorize-security-group-ingress \
-  --group-id $SG_PUB \
-  --protocol tcp --port 80 --cidr 0.0.0.0/0
+awslocal ec2 authorize-security-group-ingress --group-id $SG_PUB --protocol tcp --port 80 --cidr 0.0.0.0/0
 
 # SG privada: 8080 solo desde la SG pública (referencia por SG, no CIDR)
-SG_PRIV=$(awslocal ec2 create-security-group \
-  --vpc-id $VPC_ID \
-  --group-name app-private-sg \
-  --description "Capa privada — solo desde web-public-sg" \
-  --query "GroupId" --output text)
+SG_PRIV=$(awslocal ec2 create-security-group --vpc-id $VPC_ID --group-name app-private-sg --description "Capa privada — solo desde web-public-sg" --query "GroupId" --output text)
 
-awslocal ec2 authorize-security-group-ingress \
-  --group-id $SG_PRIV \
-  --ip-permissions "IpProtocol=tcp,FromPort=8080,ToPort=8080,UserIdGroupPairs=[{GroupId=$SG_PUB,Description='Solo desde la capa pública'}]"
+awslocal ec2 authorize-security-group-ingress --group-id $SG_PRIV --ip-permissions "IpProtocol=tcp,FromPort=8080,ToPort=8080,UserIdGroupPairs=[{GroupId=$SG_PUB,Description='Solo desde la capa pública'}]"
 
-awslocal ec2 describe-security-groups --group-ids $SG_PRIV \
-  --query "SecurityGroups[0].IpPermissions"
+awslocal ec2 describe-security-groups --group-ids $SG_PRIV --query "SecurityGroups[0].IpPermissions"
 ```
 
 **Referenciar SG en lugar de IP** es la mejor práctica:
