@@ -71,10 +71,7 @@ Lo que pasó:
 awslocal s3 mb s3://lab-09-app-bucket
 
 # Correr la app
-docker run --rm --network host \
-  -e BUCKET=lab-09-app-bucket \
-  -e AWS_ENDPOINT_URL=http://localhost:4566 \
-  lab-09-app
+docker run --rm --network host -e BUCKET=lab-09-app-bucket -e AWS_ENDPOINT_URL=http://localhost:4566 lab-09-app
 ```
 
 Output esperado:
@@ -185,10 +182,7 @@ awslocal s3api get-bucket-versioning --bucket lab-09-app-bucket
 
 ```bash
 cd ..  # volver al root del repo
-docker run --rm --network host \
-  -e BUCKET=lab-09-app-bucket \
-  -e AWS_ENDPOINT_URL=http://localhost:4566 \
-  lab-09-app
+docker run --rm --network host -e BUCKET=lab-09-app-bucket -e AWS_ENDPOINT_URL=http://localhost:4566 lab-09-app
 ```
 
 Misma app, mismo bucket — solo cambió quién lo creó.
